@@ -1,0 +1,23 @@
+[package]
+name = "ft_linear_regression"
+version = "0.1.0"
+authors = ["pbondoer <pbondoer@student.42.fr>"]
+
+[[bin]]
+name = "train"
+path = "src/train/main.rs"
+
+[[bin]]
+name = "predict"
+path = "src/predict/main.rs"
+
+[dependencies]
+
+[profile.release]
+lto = true
+debug = false
+panic = 'abort'
+opt-level = 3
+incremental = false
+overflow-checks = false
+debug-assertions = false

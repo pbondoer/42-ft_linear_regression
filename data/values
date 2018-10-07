@@ -1,0 +1,2 @@
+theta0 = 0
+theta1 = 0
