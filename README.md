@@ -1,5 +1,7 @@
 # ft\_linear\_regression @ 42
 
+![Screenshot](https://i.imgur.com/Tk729e9.png)
+
 Rust implementation of the linear regression project.
 
 ## Compiling
@@ -26,10 +28,6 @@ cargo run --bin predict
 This will predict a price based on the training done from the previous program.
 
 ### Visualizer
-
-![Screenshot](https://i.imgur.com/Tk729e9.png)
-
-> Oooh! Pretty visualizations, too?
 
 You can open `visualizer.html` in your favorite browser, drag-and-drop the
 `data.csv` and `values` files, and preview the dataset.
