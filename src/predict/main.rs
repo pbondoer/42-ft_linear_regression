@@ -1,6 +1,6 @@
-use std::process;
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
+use std::process;
 
 fn read_file(path: &str) -> String {
     let mut file;
@@ -38,20 +38,27 @@ fn main() {
         let value = split.next().unwrap_or_else(|| "").trim();
 
         match key {
-            "theta0" => theta0 = value.parse().unwrap_or_else(|e| {
-                println!("error: theta0: {}", e);
-                process::exit(1);
-            }),
-            "theta1" => theta1 = value.parse().unwrap_or_else(|e| {
-                println!("error: theta1: {}", e);
-                process::exit(1);
-            }),
+            "theta0" => {
+                theta0 = value.parse().unwrap_or_else(|e| {
+                    println!("error: theta0: {}", e);
+                    process::exit(1);
+                })
+            }
+            "theta1" => {
+                theta1 = value.parse().unwrap_or_else(|e| {
+                    println!("error: theta1: {}", e);
+                    process::exit(1);
+                })
+            }
             _ => {
                 println!("error: invalid key in values file");
                 process::exit(1);
             }
         }
     }
+
+    print!("Enter mileage: ");
+    io::stdout().flush().unwrap();
 
     let stdin = io::stdin();
     let mut line = String::new();
@@ -65,10 +72,7 @@ fn main() {
         process::exit(1);
     });
 
-    println!("mileage: {}", val);
-
     let price = theta0 + theta1 * val;
 
-    println!("price estimate: {}", price);
-
+    println!("Price estimate: {}", price);
 }

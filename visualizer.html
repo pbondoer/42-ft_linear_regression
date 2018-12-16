@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+	<style type="text/css">
+html, body, canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+
+	width: 100%;
+	height: 100%;
+
+	background-color: #222;
+}
+	</style>
+	<body>
+		<canvas id="canvas"></canvas>
+		<script type="text/javascript">
+			let data = [];
+			let min = {};
+			let max = {};
+			let values = {};
+
+			const element = document.querySelector('#canvas');
+
+			// Handle drops 
+			element.addEventListener('dragover', e => {
+				e.stopPropagation();
+				e.preventDefault();
+			});
+			element.addEventListener('dragenter', e => {
+				e.stopPropagation();
+				e.preventDefault();
+				element.style = 'background-color: #444;';
+			});
+
+			element.addEventListener('drop', e => {
+				element.style = '';
+				e.preventDefault();
+
+				const files = e.dataTransfer.files;
+
+				for (i = 0; i < files.length; i++) {
+					const file = files[i];
+					let reader = new FileReader();
+
+					if (file.name === 'values') {
+						// load values
+						reader.addEventListener('loadend', (evt) => {
+							if (evt.target.readyState !== FileReader.DONE) {
+								return;
+							}
+
+							values = {};
+
+							evt.target.result
+								.split('\n')
+								.filter(Boolean)
+								.forEach(line => {
+									const key = line.split('=')[0].trim();
+									const val = line.split('=')[1].trim();
+
+									values[key] = Number.parseFloat(val);
+								});
+
+							console.log('values loaded');
+							console.log(values);
+						});
+					} else if (file.name === 'data.csv') {
+						reader.addEventListener('loadend', (evt) => {
+							if (evt.target.readyState !== FileReader.DONE) {
+								return;
+							}
+
+							data = [];
+
+							min = {
+								km: Number.MAX_SAFE_INTEGER,
+								price: Number.MAX_SAFE_INTEGER,
+							};
+							max = {
+								km: Number.MIN_SAFE_INTEGER,
+								price: Number.MIN_SAFE_INTEGER,
+							};
+
+							evt.target.result
+								.split('\n')
+								.filter(Boolean)
+								.forEach(line => {
+									const split = line.split(',');
+
+									if (split[0] === 'km')
+										return;
+
+									let item = {
+										km: Number.parseInt(split[0], 10),
+										price: Number.parseInt(split[1], 10),
+									};
+
+									if (item.km < min.km) {
+										min.km = item.km;
+									}
+									if (item.km > max.km) {
+										max.km = item.km;
+									}
+
+									if (item.price < min.price) {
+										min.price = item.price;
+									}
+									if (item.price > max.price) {
+										max.price = item.price;
+									}
+
+									data.push(item);
+								});
+
+							data.sort((a, b) => {
+								return a.km - b.km;
+							});
+
+							console.log('data loaded');
+							console.log(data);
+							console.log("min", min);
+							console.log("max", max);
+						});
+					} else {
+						// skip
+						continue;
+					}
+
+					// proceed to reading
+					reader.readAsBinaryString(file);
+				}
+
+				setTimeout(() => {
+					drawStuff();
+				}, 100);
+			});
+
+			const drawStuff = () => {
+				element.width = window.innerWidth;
+				element.height = window.innerHeight;
+
+				var ctx = element.getContext("2d");
+
+				ctx.clearRect(0, 0, element.width, element.height);
+
+				if (!min.km || !min.km || data.length === 0) {
+					ctx.font = "3em Arial";
+					ctx.fillStyle = "white";
+
+					ctx.fillText("Drag/drop data", element.width / 2, element.height / 2);
+					return;
+				}
+
+				ctx.beginPath();
+
+				// vertical lines
+				ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+				ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+				ctx.font = "1em Arial";
+
+				const div = 10;
+				for (i = 0; i < div; i++) {
+					let x = i / div * element.width;
+					let val = Math.round(i / div * (max.km - min.km) + min.km);
+
+					ctx.fillText(`${val}km`, x + 10, 20);
+					ctx.moveTo(x, 0);
+					ctx.lineTo(x, element.height);
+				}
+				ctx.stroke();
+
+				// graph
+				ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+				ctx.beginPath();
+				ctx.moveTo(0, data[0]);
+
+				const pointSize = 10;
+				for (i = 0; i < data.length; i++) {
+					let km = data[i].km;
+					let x =  (km - min.km) / (max.km - min.km) * element.width;
+					let val = data[i].price;
+					let y = (val - min.price) / (max.price - min.price) * element.height;
+					y = element.height - y;
+					ctx.lineTo(x, y);
+					ctx.rect(x - pointSize / 2, y - pointSize / 2, pointSize,
+						pointSize);
+					ctx.moveTo(x, y);
+				}
+				ctx.stroke();
+
+				if (!values.theta0 || !values.theta1) {
+					return;
+				}
+
+				const estimate = val => values.theta0 + values.theta1 * val.km;
+
+				// draw estimation
+				ctx.strokeStyle = "rgba(0, 255, 255, 0.8)";
+				ctx.beginPath();
+				ctx.moveTo(0, element.height - (estimate(data[0]) - min.price) / (max.price - min.price) * element.height);
+				ctx.lineTo(element.width, element.height - (estimate(data[data.length - 1]) - min.price) / (max.price - min.price) * element.height);
+				ctx.stroke();
+			};
+
+			let render;
+			window.addEventListener('resize', () => {
+				clearTimeout(render);
+				render = setTimeout(drawStuff, 10);
+			});
+		</script>
+	</body>
+</html>
