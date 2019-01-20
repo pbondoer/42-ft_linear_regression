@@ -2,6 +2,7 @@
 name = "ft_linear_regression"
 version = "0.1.0"
 authors = ["pbondoer <pbondoer@student.42.fr>"]
+edition = "2018"
 
 [[bin]]
 name = "train"
